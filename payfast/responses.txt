@@ -1,0 +1,67 @@
+{
+    "code":400,
+    "status":"failed",
+    "data": {
+        "response":false,
+        "message":"Failure"
+    }
+}
+
+
+
+{
+    "code": 400,
+    "status": "failed",
+    "data": {
+        "response": false,
+        "message": "Failure - The subscription status is cancelled"
+    }
+}
+
+
+
+{
+    "code": 401,
+    "status": "failed",
+    "data": {
+        "response": "Merchant authorization failed.",
+        "message": false
+    }
+}
+
+
+
+{
+    "code": 200,
+    "status": "success",
+    "data": {
+        "response": {
+            "amount": 40000,
+            "cycles": 0,
+            "cycles_complete": 0,
+            "frequency": 3,
+            "run_date": "2023-07-05T00:00:00+02:00",
+            "status": 1,
+            "status_reason": "",
+            "status_text": "ACTIVE",
+            "token": "9e3673c1-da81-4855-ac9a-51e9863c3667"
+        }
+    }
+}
+
+
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>403 Forbidden</title>
+</head><body>
+<h1>Forbidden</h1>
+<p>You don't have permission to access /subscriptions/9e3673c1-da81-4855-ac9a-51e9863c3667/update
+on this server.</p>
+</body></html>
+
+
+
+
+"Payfast API"
+"API V1"

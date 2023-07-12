@@ -1,0 +1,6 @@
+<form action="{{ payfast_process_url }}" method="post">
+        {% for input in inputs %}
+        <input type="{{ input.type }}" name="{{ input.name }}" value="{{ input.value }}">
+        {% endfor %}
+        <input type="submit" class="btn primary" value="{{ button_name }}">
+</form>

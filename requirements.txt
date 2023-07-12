@@ -1,0 +1,6 @@
+email-validator
+Jinja2
+pydantic
+python-decouple
+pytz
+requests
