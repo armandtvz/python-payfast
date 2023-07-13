@@ -250,7 +250,7 @@ class PaymentMixin:
             'trial': trial,
             'run_date': getattr(self, 'billing_date', None),
             'recurring_amount': getattr(self, 'recurring_amount', None),
-            'is_tokenized': getattr(self, 'is_tokenized_card', False),
+            'is_tokenized': getattr(self, 'is_tokenized', False),
         }, cls=PayFastJSONEncoder)
         length = len(value)
         if length > 255:
@@ -438,7 +438,7 @@ class SubscriptionPayment(FreeTrialMixin, Payment):
         except:
             raise
         self.subscription_type = constants.SubscriptionType.REGULAR.value
-        self.is_tokenized_card = False
+        self.is_tokenized = False
 
         self.billing_date = kwargs.get('billing_date', timezone.now())
         self.recurring_amount = kwargs.get('recurring_amount', None)
@@ -468,7 +468,7 @@ class TokenizedPayment(Payment):
 
     def __init__(self, amount, item_name, **kwargs):
         self.subscription_type = constants.SubscriptionType.TOKENIZATION.value
-        self.is_tokenized_card = True
+        self.is_tokenized = True
         super().__init__(amount, item_name, **kwargs)
 
 
@@ -480,7 +480,7 @@ class TokenizedSub(SubscriptionPayment):
     def __init__(self, amount, item_name, **kwargs):
         super().__init__(amount, item_name, **kwargs)
         self.subscription_type = constants.SubscriptionType.TOKENIZATION.value
-        self.is_tokenized_card = True
+        self.is_tokenized = True
         del self.frequency
         del self.cycles
         del self.recurring_amount

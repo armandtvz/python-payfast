@@ -83,7 +83,7 @@ boolean_fields = [
     # 'subscription_notify_webhook',
     # 'subscription_notify_buyer',
 
-    'is_tokenized_card',
+    'is_tokenized',
 ]
 
 
