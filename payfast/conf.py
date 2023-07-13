@@ -73,6 +73,10 @@ class Settings:
     DEBUG = config('PAYFAST_DEBUG', cast=bool, default=True)
     USE_PAYFAST_SANDBOX = DEBUG
 
+    DEFAULT_MERCHANT_ID = 10005195
+    DEFAULT_MERCHANT_KEY = 'cfd5vff7cvxpp'
+    DEFAULT_SALT_PASSPHRASE = '123456789A_bcdefgh'
+
     PAYFAST_HOST = None
     PROCESS_URL = None
     if USE_PAYFAST_SANDBOX:
@@ -82,9 +86,9 @@ class Settings:
     API_ROOT = 'https://api.payfast.co.za'
 
     # Might only be set in Django, add defaults
-    MERCHANT_ID = config('PAYFAST_MERCHANT_ID', cast=int)
-    MERCHANT_KEY = config('PAYFAST_MERCHANT_KEY')
-    SALT_PASSPHRASE = config('PAYFAST_SALT_PASSPHRASE')
+    MERCHANT_ID = config('PAYFAST_MERCHANT_ID', default=DEFAULT_MERCHANT_ID, cast=int)
+    MERCHANT_KEY = config('PAYFAST_MERCHANT_KEY', default=DEFAULT_MERCHANT_KEY)
+    SALT_PASSPHRASE = config('PAYFAST_SALT_PASSPHRASE', default=DEFAULT_SALT_PASSPHRASE)
 
     if len(SALT_PASSPHRASE) > 32:
         raise ValueError(
@@ -93,9 +97,9 @@ class Settings:
         )
 
     if DEBUG:
-        MERCHANT_ID = 10005195
-        MERCHANT_KEY = 'cfd5vff7cvxpp'
-        SALT_PASSPHRASE = '123456789A_bcdefgh'
+        MERCHANT_ID = DEFAULT_MERCHANT_ID
+        MERCHANT_KEY = DEFAULT_MERCHANT_KEY
+        SALT_PASSPHRASE = DEFAULT_SALT_PASSPHRASE
 
     PROCESS_URL = f'https://{PAYFAST_HOST}/eng/process'
     VALIDATE_URL = f'https://{PAYFAST_HOST}/eng/query/validate'
