@@ -51,6 +51,7 @@ class PayFastResponse:
             self.json = response.json()
         except requests.JSONDecodeError:
             self.text = response.content.decode()
+        logger.debug(json.dumps(self.json, indent=4))
 
         if isinstance(self.json, dict):
             self.code = self.json.get('code', 0)
