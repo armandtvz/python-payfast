@@ -242,7 +242,7 @@ class Upgrade:
 
 
 
-class Subscription:
+class SubscriptionBase:
 
     def __init__(self, data):
         if not isinstance(data, dict):
@@ -255,20 +255,8 @@ class Subscription:
             )
 
         self.data = data
-        fields = [
-            'amount',
-            'cycles',
-            'cycles_complete',
-            'frequency',
-            'run_date',
-            'status',
-            'status_reason',
-            'status_text',
-            'token',
-            'subscription_type',
-        ]
         values = {}
-        for field in fields:
+        for field, value in data.items():
             value = data.get(field, None)
             if field == 'amount':
                 # PayFast returns the amount in cents.
@@ -285,8 +273,40 @@ class Subscription:
                 value = int(value)
 
             setattr(self, field, value)
-        self.freq = self.frequency
 
+        if hasattr(self, 'frequency'):
+            self.freq = self.frequency
+
+
+    @property
+    def is_active(self):
+        if self.status_text == constants.SubscriptionStatus.ACTIVE.value:
+            return True
+        return False
+
+
+    @property
+    def is_cancelled(self):
+        if self.status_text == constants.SubscriptionStatus.CANCELLED.value:
+            return True
+        return False
+
+
+    def cancel(self):
+        from payfast import PayFast
+        payfast = PayFast()
+        return payfast.subscriptions.cancel(self.token)
+
+
+    def update_card_link(self, return_url=None) -> str:
+        from payfast import PayFast
+        payfast = PayFast()
+        return payfast.subscriptions.update_card_link(self.token, return_url)
+
+
+
+
+class Subscription(SubscriptionBase):
 
     @property
     def start_date(self):
@@ -307,33 +327,6 @@ class Subscription:
 
 
     @property
-    def is_tokenized(self):
-        sub_type = self.subscription_type
-        if sub_type == str(constants.SubscriptionType.TOKENIZATION.value):
-            return True
-        return False
-
-
-    @property
-    def is_subscription(self):
-        return not self.is_tokenized
-
-
-    @property
-    def is_active(self):
-        if self.status_text == constants.SubscriptionStatus.ACTIVE.value:
-            return True
-        return False
-
-
-    @property
-    def is_cancelled(self):
-        if self.status_text == constants.SubscriptionStatus.CANCELLED.value:
-            return True
-        return False
-
-
-    @property
     def is_trial(self):
         """
         A subscription is in a free trial if:
@@ -343,8 +336,6 @@ class Subscription:
 
         - ``run_date`` is in the future.
         """
-        if self.is_tokenized:
-            return False
         now = timezone.now().date()
         run_date = self.run_date.date()
         if self.cycles_complete < 1:
@@ -375,10 +366,6 @@ class Subscription:
         upgrade_to_period: list=None,
         **kwargs
     ) -> Upgrade:
-        if self.is_tokenized:
-            raise PayFastException(
-                f'Cannot upgrade tokenized subscription (type 2) "{self.token}"'
-            )
         upgrade = Upgrade(
             sub=self,
             amount=amount,
@@ -404,11 +391,6 @@ class Subscription:
         from payfast import PayFast
         payfast = PayFast()
 
-        if self.is_tokenized:
-            raise PayFastException(
-                f'Cannot downgrade tokenized subscription (type 2) "{self.token}"'
-            )
-
         if settings.PAYFAST_UPDATE_BUG:
             raise PayFastException(
                 'Cannot downgrade subscription until the PayFast '
@@ -431,12 +413,6 @@ class Subscription:
             self.token,
             **kwargs,
         )
-
-
-    def cancel(self):
-        from payfast import PayFast
-        payfast = PayFast()
-        return payfast.subscriptions.cancel(self.token)
 
 
     def is_unpaid(self):
@@ -543,12 +519,6 @@ class Subscription:
         return True
 
 
-    def update_card_link(self, return_url=None) -> str:
-        from payfast import PayFast
-        payfast = PayFast()
-        return payfast.subscriptions.update_card_link(self.token, return_url)
-
-
     def update(self, **kwargs):
         from payfast import PayFast
         payfast = PayFast()
@@ -557,9 +527,20 @@ class Subscription:
 
 
 
-class SubscriptionBase:
+class Card(SubscriptionBase):
+    pass
+
+
+
+
+class SubscriptionBaseResource:
 
     key = 'subscriptions'
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_card = False
 
 
     def fetch(self, *args, **kwargs):
@@ -619,6 +600,16 @@ class SubscriptionBase:
         uri = urljoin([self.uri, token, 'fetch'])
         response = self.request('GET', uri)
         data = response.payload
+        if isinstance(data, dict):
+            if 'token' not in data:
+                data['token'] = token
+            sub_type = constants.SubscriptionType.TOKENIZATION.value
+            if 'frequency' in data:
+                sub_type = constants.SubscriptionType.REGULAR.value
+            data['subscription_type'] = sub_type
+
+        if self.is_card:
+            return Card(data)
         return Subscription(data)
 
 
@@ -677,7 +668,7 @@ class SubscriptionBase:
 
 
 
-class Subscriptions(SubscriptionBase, Resource):
+class Subscriptions(SubscriptionBaseResource, Resource):
 
 
     def pause(self, token):
@@ -805,7 +796,13 @@ class Subscriptions(SubscriptionBase, Resource):
 
 
 
-class Card(SubscriptionBase, Resource):
+class Cards(SubscriptionBaseResource, Resource):
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_card = True
+
 
     def charge(
         self,
