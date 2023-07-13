@@ -570,6 +570,58 @@ class SubscriptionBase:
         return self.get(*args, **kwargs)
 
 
+    @cached
+    def get(self, token, **kwargs):
+        """
+        GET ``/subscriptions/:token/fetch``
+
+        Example response of a subscription managed by PayFast
+        (not adhoc tokenization):
+
+        .. code-block::
+
+            {
+                "code": 200,
+                "status": "success",
+                "data": {
+                    "response": {
+                        "amount": 1628,
+                        "cycles": 14,
+                        "cycles_complete": 9,
+                        "frequency": 3,
+                        "run_date": "2020-07-04T00:00:00+02:00",
+                        "status": 1,
+                        "status_reason": "",
+                        "status_text": "ACTIVE",
+                        "token": "a3b3ae55-ab8b-b388-df23-4e6882b86ce0"
+                    }
+                }
+            }
+
+        Example response of a tokenized subscription:
+
+        .. code-block::
+
+            {
+                "code": 200,
+                "status": "success",
+                "data": {
+                    "response": {
+                        "status": 1,
+                        "status_reason": "",
+                        "status_text": "ACTIVE"
+                    }
+                }
+            }
+
+        :rtype: Subscription
+        """
+        uri = urljoin([self.uri, token, 'fetch'])
+        response = self.request('GET', uri)
+        data = response.payload
+        return Subscription(data)
+
+
     def cancel(self, token):
         """
         PUT /subscriptions/:token/cancel
@@ -626,57 +678,6 @@ class SubscriptionBase:
 
 
 class Subscriptions(SubscriptionBase, Resource):
-
-    @cached
-    def get(self, token, **kwargs):
-        """
-        GET ``/subscriptions/:token/fetch``
-
-        Example response of a subscription managed by PayFast
-        (not adhoc tokenization):
-
-        .. code-block::
-
-            {
-                "code": 200,
-                "status": "success",
-                "data": {
-                    "response": {
-                        "amount": 1628,
-                        "cycles": 14,
-                        "cycles_complete": 9,
-                        "frequency": 3,
-                        "run_date": "2020-07-04T00:00:00+02:00",
-                        "status": 1,
-                        "status_reason": "",
-                        "status_text": "ACTIVE",
-                        "token": "a3b3ae55-ab8b-b388-df23-4e6882b86ce0"
-                    }
-                }
-            }
-
-        Example response of a tokenized subscription:
-
-        .. code-block::
-
-            {
-                "code": 200,
-                "status": "success",
-                "data": {
-                    "response": {
-                        "status": 1,
-                        "status_reason": "",
-                        "status_text": "ACTIVE"
-                    }
-                }
-            }
-
-        :rtype: Subscription
-        """
-        uri = urljoin([self.uri, token, 'fetch'])
-        response = self.request('GET', uri)
-        data = response.payload
-        return Subscription(data)
 
 
     def pause(self, token):
