@@ -557,7 +557,7 @@ class Subscription:
 
 
 
-class Subscriptions(Resource):
+class SubscriptionBase:
 
     key = 'subscriptions'
 
@@ -569,6 +569,63 @@ class Subscriptions(Resource):
         """
         return self.get(*args, **kwargs)
 
+
+    def cancel(self, token):
+        """
+        PUT /subscriptions/:token/cancel
+
+        If the subscription is already cancelled::
+
+            {
+                "code": 400,
+                "status": "failed",
+                "data": {
+                    "response": false,
+                    "message": "Failure - The subscription status is cancelled"
+                }
+            }
+
+        :rtype: bool
+        """
+        uri = urljoin([self.uri, token, 'cancel'])
+        # TODO: handle "Failure - The subscription status is cancelled"
+        response = self.request('PUT', uri, raise_for_status=False)
+        if not response.ok:
+            cancel_msg = 'failure - the subscription status is cancelled'
+            if cancel_msg in response.message.lower():
+                # This would be a 400 status which is why we have to set
+                # raise_for_status to False. Override the values, because
+                # this subscription has already been cancelled so everything
+                # is okay.
+                #
+                # TODO REVIEW:
+                # Perhaps add a flag to the cancel method to raise an exception
+                # for this. However, this will be the default behaviour.
+                response.ok = True
+                response.code = 200
+                if response.payload is False:
+                    response.payload = True
+            else:
+                raise PayFastAPIException(response)
+        data = response.payload
+        cache_bust(token)
+        return data
+
+
+    def update_card_link(self, token, return_url=None) -> str:
+        """
+        This doesn't point to the PayFast API but it still fits here.
+        """
+        host = settings.PAYFAST_HOST
+        uri = f'https://{host}/eng/recurring/update/{token}'
+        if return_url:
+            uri = f'{uri}?return={return_url}'
+        return uri
+
+
+
+
+class Subscriptions(SubscriptionBase, Resource):
 
     @cached
     def get(self, token, **kwargs):
@@ -643,48 +700,6 @@ class Subscriptions(Resource):
         """
         uri = urljoin([self.uri, token, 'unpause'])
         response = self.request('PUT', uri)
-        data = response.payload
-        cache_bust(token)
-        return data
-
-
-    def cancel(self, token):
-        """
-        PUT /subscriptions/:token/cancel
-
-        If the subscription is already cancelled::
-
-            {
-                "code": 400,
-                "status": "failed",
-                "data": {
-                    "response": false,
-                    "message": "Failure - The subscription status is cancelled"
-                }
-            }
-
-        :rtype: bool
-        """
-        uri = urljoin([self.uri, token, 'cancel'])
-        # TODO: handle "Failure - The subscription status is cancelled"
-        response = self.request('PUT', uri, raise_for_status=False)
-        if not response.ok:
-            cancel_msg = 'failure - the subscription status is cancelled'
-            if cancel_msg in response.message.lower():
-                # This would be a 400 status which is why we have to set
-                # raise_for_status to False. Override the values, because
-                # this subscription has already been cancelled so everything
-                # is okay.
-                #
-                # TODO REVIEW:
-                # Perhaps add a flag to the cancel method to raise an exception
-                # for this. However, this will be the default behaviour.
-                response.ok = True
-                response.code = 200
-                if response.payload is False:
-                    response.payload = True
-            else:
-                raise PayFastAPIException(response)
         data = response.payload
         cache_bust(token)
         return data
@@ -783,6 +798,14 @@ class Subscriptions(Resource):
         return data
 
 
+    def new(self, *args, **kwargs):
+        return SubscriptionPayment(*args, **kwargs)
+
+
+
+
+class Card(SubscriptionBase, Resource):
+
     def charge(
         self,
         token,
@@ -854,19 +877,4 @@ class Subscriptions(Resource):
 
 
     def new(self, *args, **kwargs):
-        return SubscriptionPayment(*args, **kwargs)
-
-
-    def new_tokenized(self, *args, **kwargs):
         return TokenizedPayment(*args, **kwargs)
-
-
-    def update_card_link(self, token, return_url=None) -> str:
-        """
-        This doesn't point to the PayFast API but it still fits here.
-        """
-        host = settings.PAYFAST_HOST
-        uri = f'https://{host}/eng/recurring/update/{token}'
-        if return_url:
-            uri = f'{uri}?return={return_url}'
-        return uri

@@ -14,7 +14,7 @@ from payfast.payment import (
 from payfast.base import RequestsTransport
 from payfast.logging import configure_logging
 from payfast.exceptions import PayFastException
-from payfast.api.subscriptions import Subscriptions
+from payfast.api.subscriptions import Subscriptions, Card
 from payfast.api.transactions import Transactions, CCTransactions
 from payfast.api.refunds import Refunds
 
@@ -45,6 +45,7 @@ class PayFast:
 
         self.subscriptions = Subscriptions(*args, **kwargs)
         self.subs = Subscriptions(*args, **kwargs) # alias
+        self.card = Card(*args, **kwargs)
 
         self.transactions = Transactions(*args, **kwargs)
         self.cc_transactions = CCTransactions(*args, **kwargs)
