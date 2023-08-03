@@ -122,7 +122,10 @@ class RequestsTransport:
             headers = self.get_headers(for_headers)
 
         if settings.DEBUG:
-            uri += '/?testing=true'
+            # NOTE: Do not use ``uri += '/?testing=true'`` (no forward slash)
+            # as that will result in a redirect which will cause the request
+            # to fail with a 405 Method Not Allowed status.
+            uri += '?testing=true'
 
         request_args = {
             'method': method,
