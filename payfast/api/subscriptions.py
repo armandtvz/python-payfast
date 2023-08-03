@@ -846,6 +846,10 @@ class Cards(SubscriptionBaseResource, Resource):
         amount_cents = int(amount * 100)
         logger.info(f'Charging card "{token}" with {amount_cents} cents.')
         uri = urljoin([self.uri, token, 'adhoc'])
+        if itn:
+            itn = 'true'
+        else:
+            itn = 'false'
         _payload = {
             'amount': amount_cents,
             'item_name': item_name,
