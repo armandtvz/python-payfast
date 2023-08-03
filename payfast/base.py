@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime
 from urllib.parse import urljoin
+import urllib.parse
 
 import requests
 
@@ -115,11 +116,17 @@ class RequestsTransport:
         params=None,
         headers=None,
         raise_for_status=True,
+        urlencode=False,
         **kwargs
     ):
         if not headers:
             for_headers = payload or params
-            headers = self.get_headers(for_headers)
+            content_type = None
+            if method.lower() != 'get':
+                content_type = 'application/json'
+                if urlencode:
+                    content_type = 'application/x-www-form-urlencoded'
+            headers = self.get_headers(for_headers, content_type=content_type)
 
         if settings.DEBUG:
             # NOTE: Do not use ``uri += '/?testing=true'`` (no forward slash)
@@ -133,7 +140,10 @@ class RequestsTransport:
             'headers': headers,
         }
         if payload:
-            payload = json.dumps(payload)
+            if urlencode:
+                payload = urllib.parse.urlencode(payload)
+            else:
+                payload = json.dumps(payload)
             request_args['data'] = payload
 
         elif params:
@@ -160,7 +170,7 @@ class RequestsTransport:
         return response
 
 
-    def get_headers(self, payload):
+    def get_headers(self, payload, content_type=None):
         # There's a bug on PayFast's API where they don't account
         # for microseconds which means that using datetime.isoformat()
         # will not work.
@@ -183,6 +193,9 @@ class RequestsTransport:
                 for_signature['payload'] = payload
         signature = make_signature(for_signature, a12y=True)
         headers['signature'] = signature
+
+        if content_type:
+            headers['content-type'] = content_type
         return headers
 
 
