@@ -153,10 +153,13 @@ class RequestsTransport:
 
         req = requests.Request(**request_args)
         req = req.prepare()
-
         response = None
         try:
-            response = self.session.send(req, timeout=settings.API_TIMEOUT)
+            response = self.session.send(
+                req,
+                timeout=settings.API_TIMEOUT,
+                allow_redirects=False,
+            )
         except (
             requests.ConnectionError,
             requests.Timeout
