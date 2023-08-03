@@ -21,7 +21,7 @@ from payfast.api.refunds import Refunds
 
 
 
-__version__ = '0.6'
+__version__ = '0.6.1'
 __title__ = 'python-payfast'
 
 
