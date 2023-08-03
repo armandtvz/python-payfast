@@ -73,9 +73,9 @@ class Settings:
     DEBUG = config('PAYFAST_DEBUG', cast=bool, default=True)
     USE_PAYFAST_SANDBOX = DEBUG
 
-    DEFAULT_MERCHANT_ID = 10005195
-    DEFAULT_MERCHANT_KEY = 'cfd5vff7cvxpp'
-    DEFAULT_SALT_PASSPHRASE = '123456789A_bcdefgh'
+    DEFAULT_MERCHANT_ID = 10030202
+    DEFAULT_MERCHANT_KEY = '4fkhqhutgnkhj'
+    DEFAULT_SALT_PASSPHRASE = 'testing12345'
 
     PAYFAST_HOST = None
     PROCESS_URL = None
